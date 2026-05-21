@@ -5,17 +5,19 @@ import Image from 'next/image'
 import { prisma } from '@/lib/db'
 import { format } from 'date-fns'
 
-type Props = { params: { slug: string } }
+type Props = { params: Promise<{ slug: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const article = await prisma.article.findUnique({ where: { slug: params.slug } }).catch(() => null)
+  const { slug } = await params
+  const article = await prisma.article.findUnique({ where: { slug } }).catch(() => null)
   if (!article) return { title: 'Not Found' }
   return { title: article.title, description: article.excerpt }
 }
 
 export default async function ArticlePage({ params }: Props) {
+  const { slug } = await params
   const article = await prisma.article.findUnique({
-    where: { slug: params.slug, published: true },
+    where: { slug, published: true },
   }).catch(() => null)
 
   if (!article) notFound()
